@@ -1,0 +1,79 @@
+plugins {
+    id "java"
+    id "eclipse"
+    id 'application'
+    id "com.diffplug.gradle.spotless" version "3.14.0"
+    id 'io.franzbecker.gradle-lombok' version '1.14'
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
+mainClassName = 'com.tommsy.sorryai.Main'
+applicationDefaultJvmArgs = ["-Dfile.encoding=UTF-8"]
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.github.pcj:google-options:1.0.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.2.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.2.0'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    reports {
+        html.enabled = true
+    }
+    systemProperty "file.encoding", "utf-8"
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': project.mainClassName
+    }
+}
+
+lombok {
+    version = "1.18.2"
+    sha256 = "f13db210efa2092a58bb7befce58ffa502e5fefc5e1099f45007074008756bc0"
+}
+
+spotless {
+    java {
+        licenseHeaderFile 'spotless/license-header.txt'
+        removeUnusedImports()
+        // XML file dumped out by the Eclipse formatter
+        eclipse().configFile 'spotless/spotless.eclipseformat.xml'
+        // An import ordering file, exported from Eclipse
+        importOrderFile 'spotless/spotless.importorder'
+        trimTrailingWhitespace()
+    }
+    format 'misc', {
+        target '**/.gitignore', "**/*.properties", "*.gradle"
+        indentWithSpaces()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    freshmark {
+        target '*.md'
+    }
+    // The default value of PLATFORM_NATIVE is recommended (can be WINDOWS, UNIX, or PLATFORM_NATIVE)
+    lineEndings 'PLATFORM_NATIVE'
+}
+
+eclipse {
+    classpath {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}

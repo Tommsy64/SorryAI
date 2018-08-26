@@ -1,0 +1,7 @@
+#Organize Import Order
+5=com
+4=net
+3=org
+2=lombok
+1=javax
+0=java
