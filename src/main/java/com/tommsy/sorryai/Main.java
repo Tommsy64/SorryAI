@@ -19,19 +19,31 @@
 package com.tommsy.sorryai;
 
 import java.util.Collections;
+import java.util.Scanner;
 
 import com.google.devtools.common.options.OptionsParser;
+import com.tommsy.sorryai.agent.AgentHandler;
+import com.tommsy.sorryai.agent.RandomAgent;
+import com.tommsy.sorryai.game.Game;
 
 public class Main {
+    public static Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
         OptionsParser parser = OptionsParser.newOptionsParser(Options.class);
         parser.parseAndExitUponError(args);
         Options options = parser.getOptions(Options.class);
 
-        if (options.help) {
-            printUsage(parser);
-            return;
-        }
+        // if (options.help) {
+        // printUsage(parser);
+        // return;
+        // }
+
+        AgentHandler handler = new AgentHandler(new RandomAgent(), new RandomAgent(), new RandomAgent(), new RandomAgent());
+        Game game = new Game(handler);
+        game.runGame();
+
+        scanner.close();
     }
 
     private static void printUsage(OptionsParser parser) {

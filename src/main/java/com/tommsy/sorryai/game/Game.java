@@ -18,8 +18,11 @@
 
 package com.tommsy.sorryai.game;
 
+import java.util.Arrays;
+
 import com.tommsy.sorryai.agent.Agent;
 import com.tommsy.sorryai.agent.AgentHandler;
+import com.tommsy.sorryai.game.Board.ExitDirection;
 import com.tommsy.sorryai.game.Player.GamePiece;
 import com.tommsy.sorryai.game.dice.DiceRoller;
 import com.tommsy.sorryai.game.dice.RandomDiceRoller;
@@ -57,40 +60,63 @@ public class Game {
         do {
             roll = dice.roll();
             GamePiece[] moveablePieces = board.getMoveablePiecesForPlayer(currentPlayer, roll);
+            Agent agent = agentHandler.getAgent(currentPlayer.index);
+            System.out.println("Start of " + agent.getName() + "'s turn. Dice: " + roll);
             if (moveablePieces.length != 0) {
-                Agent agent = agentHandler.getAgent(currentPlayer.index);
-                int selectedPieceIndex = agent.processTurn(roll, board, moveablePieces);
+                System.out.println("__________________________________________________________________________");
+                int selectedPieceIndex = agent.processTurn(this, board, roll, moveablePieces);
                 GamePiece selectedPiece = moveablePieces[selectedPieceIndex];
-                if (selectedPiece.canMoveToCenter) {
-                    if ((selectedPiece.mustMoveToCenter || selectedPiece.willMoveToCenter))
-                        board.moveToCenter(selectedPiece);
+                if (selectedPiece.progress == -1) {
+                    if (board.putOnBoard(selectedPiece))
+                        processEating(agent, board, selectedPiece);
                 } else if (selectedPiece.progress == GamePiece.CENTER_PROGRESS) {
-                    boolean atePiece = board.exitCenter(selectedPiece, selectedPiece.centerExitPosition);
-                    if (atePiece)
+                    ExitDirection exitDirection;
+                    do {
+                        exitDirection = agent.getExitDirection();
+                    } while (!board.canExitCenterTo(selectedPiece, exitDirection));
+
+                    if (board.exitCenter(selectedPiece, exitDirection))
+                        processEating(agent, board, selectedPiece);
+                } else if (selectedPiece.canMoveToCenter) {
+                    System.out.println("[Debug] Can move to center");
+                    if (selectedPiece.mustMoveToCenter)
+                        board.moveToCenter(selectedPiece);
+                    else if (agent.moveToCenter())
+                        board.moveToCenter(selectedPiece);
+                    else if (board.moveByAmount(selectedPiece, roll))
                         processEating(agent, board, selectedPiece);
                 } else {
-                    boolean atePiece = board.moveByAmount(selectedPiece, roll);
-                    if (atePiece)
+                    if (board.moveByAmount(selectedPiece, roll))
                         processEating(agent, board, selectedPiece);
                 }
+
+                System.out.println(drawBoard(board));
+                System.out.println("=========================================================================");
+                System.out.print("End of turn\n\n\n\n\n\n\n\n\n\n");
+
                 if (selectedPiece.progress > Board.TOTAL_PROGRESS) {
                     gameOver = board.hasPlayerWon(currentPlayer);
+                    System.out.println(agent.getName() + " has won! (Player " + (currentPlayer.index + 1) + ")");
+
+                    System.out.println(Arrays.toString(currentPlayer.pieces));
                     continue;
                 }
+            } else {
+                System.out.println("No possible moves.");
             }
             if (roll == 6) // Player gets to roll again on a 6.
                 continue;
             currentPlayer = getNextPlayer(currentPlayer);
-        } while (gameOver);
+        } while (!gameOver);
     }
 
-    void printBoard(Board board) {
-        System.out.println(board.toString(player1, player2, player3, player4));
+    public String drawBoard(Board board) {
+        return board.toString(player1, player2, player3, player4);
     }
 
     private void processEating(Agent agent, Board board, GamePiece piece) {
         boolean atePiece = true;
-        while (atePiece && agent.moveAfterEatting()) {
+        while (atePiece && agent.moveAfterEating()) {
             if (board.canMoveToCenter(piece, 5) && board.canMoveByAmount(piece, 4)) {
                 piece.canMoveToCenter = true;
                 if (piece.mustMoveToCenter = !board.canMoveByAmount(piece, 5) || agent.moveToCenter()) {

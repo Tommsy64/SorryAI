@@ -18,25 +18,82 @@
 
 package com.tommsy.sorryai.agent;
 
+import static com.tommsy.sorryai.Main.scanner;
+
+import java.util.Arrays;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+
 import com.tommsy.sorryai.game.Board;
+import com.tommsy.sorryai.game.Board.ExitDirection;
+import com.tommsy.sorryai.game.Game;
 import com.tommsy.sorryai.game.Player.GamePiece;
 
+@RequiredArgsConstructor
+@ToString
 public class HumanAgent implements Agent {
 
-    @Override
-    public int processTurn(int dice, Board board, GamePiece[] moveablePieces) {
+    @Getter
+    private final String name;
 
-        return 0;
+    @Override
+    public int processTurn(Game game, Board board, int dice, GamePiece[] moveablePieces) {
+        Arrays.sort(moveablePieces);
+        System.out.println(game.drawBoard(board));
+
+        if (moveablePieces.length == 1) {
+            System.out.println(name + " rolled a " + dice + ".");
+            return 0;
+        }
+
+        System.out.println(name + " rolled a " + dice + ". Which piece would you like to move? ");
+        System.out.println(Arrays.toString(moveablePieces));
+
+        int selected;
+        do {
+            selected = scanner.hasNextInt() ? scanner.nextInt() - 1 : -1;
+        } while (selected > moveablePieces.length || selected < 0);
+        return selected;
     }
 
     @Override
-    public boolean moveAfterEatting() {
-        return false;
+    public boolean moveAfterEating() {
+        System.out.println("Would you like to move 5 after eating? ");
+        String response;
+        do {
+            response = scanner.nextLine();
+        } while (!response.equalsIgnoreCase("yes") && !response.equalsIgnoreCase("true") && !response.equalsIgnoreCase("y") && !response.equalsIgnoreCase("no") &&
+                !response.equalsIgnoreCase("false") && !response.equalsIgnoreCase("n"));
+        return response.equalsIgnoreCase("yes") || response.equalsIgnoreCase("true") || response.equalsIgnoreCase("y");
     }
 
     @Override
     public boolean moveToCenter() {
-        return false;
+        System.out.println("Would you like to move to the center? ");
+        boolean result;
+        do {
+            String response = scanner.nextLine().toLowerCase();
+            if (response.startsWith("y") || response.startsWith("t")) {
+                result = true;
+                break;
+            } else if (response.startsWith("n") || response.startsWith("f")) {
+                result = false;
+                break;
+            }
+            System.out.println("Invalid response.");
+        } while (true);
+        return result;
     }
 
+    @Override
+    public ExitDirection getExitDirection() {
+        System.out.println("Which direction would you like to exit?");
+        int playerDirection;
+        do {
+            playerDirection = scanner.hasNextInt() ? scanner.nextInt() : -1;
+        } while (playerDirection != 1 && playerDirection != 2 && playerDirection != 3 && playerDirection == 4);
+        return ExitDirection.fromPlayerIndex(playerDirection);
+    }
 }

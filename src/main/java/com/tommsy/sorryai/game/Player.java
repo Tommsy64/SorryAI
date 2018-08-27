@@ -19,7 +19,6 @@
 package com.tommsy.sorryai.game;
 
 import lombok.Getter;
-import lombok.ToString;
 
 public class Player {
     static final int PIECES_PER_PLAYER = 5;
@@ -28,14 +27,13 @@ public class Player {
     public final int index, startingPosition;
 
     Player(int index) {
-        this.index = index + 1;
+        this.index = index;
         this.startingPosition = Board.SIZE / 4 * index;
         for (int i = 0; i < pieces.length; i++)
             pieces[i] = new GamePiece();
     }
 
-    @ToString
-    public class GamePiece {
+    public class GamePiece implements Comparable<GamePiece> {
         static final int CENTER_PROGRESS = -2;
         @Getter
         int progress = -1;
@@ -43,12 +41,28 @@ public class Player {
 
         @Getter
         boolean canMoveToCenter, mustMoveToCenter;
-        public boolean willMoveToCenter;
-
-        public int centerExitPosition;
 
         public Player getPlayer() {
             return Player.this;
+        }
+
+        @Override
+        public int compareTo(GamePiece other) {
+            if (other.progress == progress)
+                return 0;
+            if (progress == CENTER_PROGRESS)
+                return Integer.MAX_VALUE;
+            if (other.progress == -1)
+                return progress + 1;
+            return progress - other.progress;
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append("GamePiece(progress=").append(progress)
+                    .append(", index=").append(boardIndex)
+                    .append(", player=").append(index + 1)
+                    .append(')').toString();
         }
     }
 }

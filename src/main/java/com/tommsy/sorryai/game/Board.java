@@ -20,15 +20,41 @@ package com.tommsy.sorryai.game;
 
 import java.util.ArrayList;
 
+import lombok.RequiredArgsConstructor;
+
 import com.tommsy.sorryai.game.Player.GamePiece;
 
 public class Board {
     static final int SIZE = 56;
-    static final int TOTAL_PROGRESS = SIZE + 3;
-    private final GamePiece[] board = new GamePiece[SIZE + 1]; // Add extra space for center
+    static final int TOTAL_PROGRESS = SIZE + 2;
+    final GamePiece[] board = new GamePiece[SIZE + 1]; // Add extra space for center
 
-    private static final int CENTER_ENTRANCE_1 = 9, CENTER_ENTRANCE_2 = 23, CENTER_ENTRANCE_3 = 37, CENTER_ENTRANCE_4 = 51;
+    @RequiredArgsConstructor
+    public static enum ExitDirection {
+        ONE(9), TWO(23), THREE(37), FOUR(51);
+        final int position;
 
+        public static ExitDirection fromPlayerIndex(int player) {
+            switch (player) {
+            case 1:
+                return FOUR;
+            case 2:
+                return ONE;
+            case 3:
+                return TWO;
+            case 4:
+                return THREE;
+            default:
+                throw new IllegalArgumentException("Player must be 1, 2, 3, or 4");
+            }
+        }
+    }
+
+    /**
+     * @param player
+     * @param amount
+     * @return Game pieces that can be moved the specified amount by the player
+     */
     GamePiece[] getMoveablePiecesForPlayer(Player player, int amount) {
         ArrayList<GamePiece> moveablePieces = new ArrayList<>(Player.PIECES_PER_PLAYER);
 
@@ -43,15 +69,17 @@ public class Board {
         for (int i = 0; i < player.pieces.length; i++) {
             if (player.pieces[i].progress == -1)
                 continue;
-            if (player.pieces[i].progress == GamePiece.CENTER_PROGRESS && amount == 1 && canExitCenter(player.pieces[i])) {
-                moveablePieces.add(player.pieces[i]);
+            if (player.pieces[i].progress == GamePiece.CENTER_PROGRESS) {
+                if (amount == 1 && canExitCenter(player.pieces[i]))
+                    moveablePieces.add(player.pieces[i]);
                 continue;
             }
+            int minusOne = 0;
             if (player.pieces[i].canMoveToCenter = canMoveToCenter(player.pieces[i], amount)) {
                 player.pieces[i].mustMoveToCenter = !canMoveByAmount(player.pieces[i], amount);
-                amount--;
+                minusOne = 1;
             }
-            if (canMoveByAmount(player.pieces[i], amount))
+            if (canMoveByAmount(player.pieces[i], amount - minusOne))
                 moveablePieces.add(player.pieces[i]);
         }
 
@@ -78,16 +106,20 @@ public class Board {
      * @return
      */
     private boolean canExitCenter(GamePiece piece) {
-        return (board[CENTER_ENTRANCE_1] != null && board[CENTER_ENTRANCE_1].getPlayer() != piece.getPlayer()) ||
-                (board[CENTER_ENTRANCE_2] != null && board[CENTER_ENTRANCE_2].getPlayer() != piece.getPlayer()) ||
-                (board[CENTER_ENTRANCE_3] != null && board[CENTER_ENTRANCE_3].getPlayer() != piece.getPlayer()) ||
-                (board[CENTER_ENTRANCE_4] != null && board[CENTER_ENTRANCE_4].getPlayer() != piece.getPlayer());
+        return (board[ExitDirection.ONE.position] != null && board[ExitDirection.ONE.position].getPlayer() != piece.getPlayer()) ||
+                (board[ExitDirection.TWO.position] != null && board[ExitDirection.TWO.position].getPlayer() != piece.getPlayer()) ||
+                (board[ExitDirection.THREE.position] != null && board[ExitDirection.THREE.position].getPlayer() != piece.getPlayer()) ||
+                (board[ExitDirection.FOUR.position] != null && board[ExitDirection.FOUR.position].getPlayer() != piece.getPlayer());
+    }
+
+    boolean canExitCenterTo(GamePiece piece, ExitDirection exit) {
+        return board[exit.position] == null || board[exit.position].getPlayer() != piece.getPlayer();
     }
 
     boolean canMoveToCenter(GamePiece piece, int amount) {
         int centerAmount = piece.progress + amount - 1;
-        return (centerAmount == CENTER_ENTRANCE_1 || centerAmount == CENTER_ENTRANCE_2 || centerAmount == CENTER_ENTRANCE_3 || centerAmount == CENTER_ENTRANCE_4)
-                && !isCenterBlocked(piece);
+        return (centerAmount == ExitDirection.ONE.position || centerAmount == ExitDirection.TWO.position || centerAmount == ExitDirection.THREE.position
+                || centerAmount == ExitDirection.FOUR.position) && !isCenterBlocked(piece);
     }
 
     private boolean isCenterBlocked(GamePiece piece) {
@@ -101,7 +133,7 @@ public class Board {
     }
 
     private boolean isOutOfBounds(GamePiece piece, int amount) {
-        return piece.progress + amount > 64;
+        return piece.progress + amount > 63;
     }
 
     /**
@@ -111,14 +143,14 @@ public class Board {
      * @param amount
      * @return
      */
-    private boolean isBlockedBySelf(GamePiece piece, int amount) {
+    boolean isBlockedBySelf(GamePiece piece, int amount) {
         final int initialAmount = amount;
         int safeAreaAmount = piece.progress + amount - TOTAL_PROGRESS;
         if (safeAreaAmount > 0) {
             amount -= safeAreaAmount;
             Player player = piece.getPlayer();
             for (int i = 0; i < player.pieces.length; i++) {
-                if (player.pieces[i].progress > TOTAL_PROGRESS && player.pieces[i].progress <= piece.progress + initialAmount)
+                if (player.pieces[i] != piece && player.pieces[i].progress > TOTAL_PROGRESS && player.pieces[i].progress <= piece.progress + initialAmount)
                     return true;
             }
         }
@@ -137,10 +169,10 @@ public class Board {
         return putTo(piece, piece.getPlayer().startingPosition);
     }
 
-    boolean exitCenter(GamePiece piece, int direction) {
-        if (direction != CENTER_ENTRANCE_1 || direction != CENTER_ENTRANCE_2 || direction != CENTER_ENTRANCE_3 || direction != CENTER_ENTRANCE_4)
-            throw new IllegalArgumentException("Exit direction invalid");
-        return putTo(piece, direction);
+    boolean exitCenter(GamePiece piece, ExitDirection exitDirection) {
+        // Shift absolute position by the starting position of the player. Then, wrap values that go above SIZE or below 0.
+        piece.progress = (SIZE + exitDirection.position - piece.getPlayer().startingPosition) % SIZE;
+        return putTo(piece, exitDirection.position);
     }
 
     boolean moveToCenter(GamePiece piece) {
@@ -157,8 +189,12 @@ public class Board {
      */
     boolean moveByAmount(GamePiece piece, int amount) {
         piece.progress += amount;
-        if (piece.progress > TOTAL_PROGRESS) // Piece has reached the safe area
+        if (piece.progress > TOTAL_PROGRESS) { // Piece has reached the safe area
+            if (piece.boardIndex >= 0)
+                board[piece.boardIndex] = null;
+            piece.boardIndex = -1;
             return false;
+        }
         int to = (piece.boardIndex + amount) % SIZE;
         return putTo(piece, to);
     }
@@ -224,19 +260,28 @@ public class Board {
 
         boardToString(sb, 36).append("█");
         playerHomeToString(sb, player3, 4).append("█");
-        boardToString(sb, 26).append("╚════╗\n║");
+        boardToString(sb, 24).append("╚════╗\n║");
 
         boardToStringReverse(sb, 42, 6).append("█");
         playerHomeToString(sb, player3, 5).append("█");
-        boardToStringReverse(sb, 25, 6).append("║\n║");
+        boardToStringReverse(sb, 23, 6).append("║\n║");
 
         boardToString(sb, 43).append("█████████████");
         boardToString(sb, 17).append("║\n║");
 
         boardToString(sb, 44);
-        playerHomeToString(sb, player4).append("█");
+
+        playerHomeToString(sb, player4, 1);
+        playerHomeToString(sb, player4, 2);
+        playerHomeToString(sb, player4, 3);
+        playerHomeToString(sb, player4, 4);
+        playerHomeToString(sb, player4, 5).append("█");
         boardToString(sb, board.length - 1).append("█");
-        playerHomeToString(sb, player2);
+        playerHomeToString(sb, player2, 1);
+        playerHomeToString(sb, player2, 2);
+        playerHomeToString(sb, player2, 3);
+        playerHomeToString(sb, player2, 4);
+        playerHomeToString(sb, player2, 5);
         boardToString(sb, 16).append("║\n║");
 
         boardToString(sb, 45).append("█████████████");
@@ -269,20 +314,20 @@ public class Board {
 
     private StringBuilder boardToString(StringBuilder sb, int position) {
         GamePiece piece;
-        return sb.append((piece = board[position]) == null ? NO_PIECE_STRING : piece.getPlayer().index);
+        return sb.append((piece = board[position]) == null ? NO_PIECE_STRING : piece.getPlayer().index + 1);
     }
 
     private StringBuilder boardToString(StringBuilder sb, int start, int length) {
         GamePiece piece;
         for (int i = 0; i < length; i++)
-            sb.append((piece = board[start + i]) == null ? NO_PIECE_STRING : piece.getPlayer().index);
+            sb.append((piece = board[start + i]) == null ? NO_PIECE_STRING : piece.getPlayer().index + 1);
         return sb;
     }
 
     private StringBuilder boardToStringReverse(StringBuilder sb, int start, int length) {
         GamePiece piece;
-        for (int i = length; i > 0; i--)
-            sb.append((piece = board[start + i]) == null ? NO_PIECE_STRING : piece.getPlayer().index);
+        for (int i = 0; i < length; i++)
+            sb.append((piece = board[start - i]) == null ? NO_PIECE_STRING : piece.getPlayer().index + 1);
         return sb;
     }
 
@@ -290,19 +335,8 @@ public class Board {
         if (player == null)
             return sb.append("?");
         for (int i = 0; i < player.pieces.length; i++)
-            if (player.pieces[i].progress > TOTAL_PROGRESS && TOTAL_PROGRESS - player.pieces[i].progress == index)
-                return sb.append(player.index);
+            if (player.pieces[i].progress > TOTAL_PROGRESS && player.pieces[i].progress - TOTAL_PROGRESS == index)
+                return sb.append(player.index + 1);
         return sb.append(NO_PIECE_STRING);
-    }
-
-    private StringBuilder playerHomeToString(StringBuilder sb, Player player) {
-        if (player == null)
-            return sb.append("?");
-        for (int i = 0; i < player.pieces.length; i++)
-            if (player.pieces[i].progress > TOTAL_PROGRESS && TOTAL_PROGRESS - player.pieces[i].progress == i + 1)
-                sb.append(player.index);
-            else
-                sb.append(NO_PIECE_STRING);
-        return sb;
     }
 }

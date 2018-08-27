@@ -19,7 +19,13 @@
 package com.tommsy.sorryai.agent;
 
 public class AgentHandler {
-    private Agent[] agents = new Agent[4];
+    private final Agent[] agents;
+
+    public AgentHandler(Agent... agents) {
+        if (agents == null || agents.length != 4)
+            throw new IllegalArgumentException("There must be exactly 4 agents.");
+        this.agents = agents;
+    }
 
     public void setAgent(int index, Agent agent) {
         agents[index] = agent;

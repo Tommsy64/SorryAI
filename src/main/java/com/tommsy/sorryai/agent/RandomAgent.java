@@ -18,20 +18,45 @@
 
 package com.tommsy.sorryai.agent;
 
+import java.util.Random;
+
+import lombok.Getter;
+
 import com.tommsy.sorryai.game.Board;
 import com.tommsy.sorryai.game.Board.ExitDirection;
 import com.tommsy.sorryai.game.Game;
 import com.tommsy.sorryai.game.Player.GamePiece;
 
-public interface Agent {
+public class RandomAgent implements Agent {
 
-    public int processTurn(Game game, Board board, int dice, GamePiece[] moveablePieces);
+    private final Random rand;
+    @Getter
+    private final String name;
 
-    public boolean moveAfterEating();
+    private static int count = 1;
 
-    public boolean moveToCenter();
+    public RandomAgent() {
+        this.rand = new Random();
+        this.name = "Random Bot " + count++;
+    }
 
-    public ExitDirection getExitDirection();
+    @Override
+    public int processTurn(Game game, Board board, int dice, GamePiece[] moveablePieces) {
+        return rand.nextInt(moveablePieces.length);
+    }
 
-    public String getName();
+    @Override
+    public boolean moveAfterEating() {
+        return rand.nextBoolean();
+    }
+
+    @Override
+    public boolean moveToCenter() {
+        return rand.nextBoolean();
+    }
+
+    @Override
+    public ExitDirection getExitDirection() {
+        return ExitDirection.fromPlayerIndex(rand.nextInt(4) + 1);
+    }
 }
