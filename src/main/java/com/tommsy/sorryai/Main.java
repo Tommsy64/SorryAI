@@ -23,6 +23,7 @@ import java.util.Scanner;
 
 import com.google.devtools.common.options.OptionsParser;
 import com.tommsy.sorryai.agent.AgentHandler;
+import com.tommsy.sorryai.agent.HumanAgent;
 import com.tommsy.sorryai.agent.RandomAgent;
 import com.tommsy.sorryai.game.Game;
 
@@ -39,7 +40,7 @@ public class Main {
         // return;
         // }
 
-        AgentHandler handler = new AgentHandler(new RandomAgent(), new RandomAgent(), new RandomAgent(), new RandomAgent());
+        AgentHandler handler = new AgentHandler(new HumanAgent("Human"), new RandomAgent(), new RandomAgent(), new RandomAgent());
         Game game = new Game(handler);
         game.runGame();
 

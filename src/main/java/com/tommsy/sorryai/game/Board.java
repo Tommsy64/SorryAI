@@ -106,10 +106,10 @@ public class Board {
      * @return
      */
     private boolean canExitCenter(GamePiece piece) {
-        return (board[ExitDirection.ONE.position] != null && board[ExitDirection.ONE.position].getPlayer() != piece.getPlayer()) ||
-                (board[ExitDirection.TWO.position] != null && board[ExitDirection.TWO.position].getPlayer() != piece.getPlayer()) ||
-                (board[ExitDirection.THREE.position] != null && board[ExitDirection.THREE.position].getPlayer() != piece.getPlayer()) ||
-                (board[ExitDirection.FOUR.position] != null && board[ExitDirection.FOUR.position].getPlayer() != piece.getPlayer());
+        return !(board[ExitDirection.ONE.position] != null && board[ExitDirection.ONE.position].getPlayer() == piece.getPlayer()) &&
+                !(board[ExitDirection.TWO.position] != null && board[ExitDirection.TWO.position].getPlayer() == piece.getPlayer()) &&
+                !(board[ExitDirection.THREE.position] != null && board[ExitDirection.THREE.position].getPlayer() == piece.getPlayer()) &&
+                !(board[ExitDirection.FOUR.position] != null && board[ExitDirection.FOUR.position].getPlayer() == piece.getPlayer());
     }
 
     boolean canExitCenterTo(GamePiece piece, ExitDirection exit) {

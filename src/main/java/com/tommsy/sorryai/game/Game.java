@@ -115,6 +115,8 @@ public class Game {
     }
 
     private void processEating(Agent agent, Board board, GamePiece piece) {
+        if (!board.canMoveByAmount(piece, 5))
+            return;
         boolean atePiece = true;
         while (atePiece && agent.moveAfterEating()) {
             if (board.canMoveToCenter(piece, 5) && board.canMoveByAmount(piece, 4)) {

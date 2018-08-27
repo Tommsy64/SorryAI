@@ -54,19 +54,22 @@ public class HumanAgent implements Agent {
         int selected;
         do {
             selected = scanner.hasNextInt() ? scanner.nextInt() - 1 : -1;
-        } while (selected > moveablePieces.length || selected < 0);
+        } while (selected >= moveablePieces.length || selected < 0);
         return selected;
     }
 
     @Override
     public boolean moveAfterEating() {
-        System.out.println("Would you like to move 5 after eating? ");
+        System.out.println("Would you like to move 5 after eating?");
+        System.out.println();
         String response;
+        boolean booleanResponse;
         do {
-            response = scanner.nextLine();
-        } while (!response.equalsIgnoreCase("yes") && !response.equalsIgnoreCase("true") && !response.equalsIgnoreCase("y") && !response.equalsIgnoreCase("no") &&
-                !response.equalsIgnoreCase("false") && !response.equalsIgnoreCase("n"));
-        return response.equalsIgnoreCase("yes") || response.equalsIgnoreCase("true") || response.equalsIgnoreCase("y");
+            response = scanner.nextLine().toLowerCase();
+            booleanResponse = response.startsWith("y") || response.startsWith("t");
+            System.out.println("[Debug] Response: " + response + " Interpreted as: " + booleanResponse);
+        } while (!response.startsWith("y") && !response.startsWith("t") && !response.startsWith("n") && !response.startsWith("f"));
+        return booleanResponse;
     }
 
     @Override
