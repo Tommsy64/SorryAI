@@ -1,7 +1,7 @@
 Sorry AI
 ========
 
-A simple AI to play a varient of the board game "Sorry".
+A simple AI that plays a variant of the board game "Sorry." Includes a full emulation of the board game and also allows humans to play against the bot/eachother.
 
 Agents
 ------
