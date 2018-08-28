@@ -18,6 +18,14 @@
 
 package com.tommsy.sorryai.game.dice;
 
+/**
+ * Represents a dice that can be rolled.
+ */
 public interface DiceRoller {
+    /**
+     * Should (probably) return a number between 1 and 6 inclusive.
+     *
+     * @return A number between 1 and 6;
+     */
     public int roll();
 }

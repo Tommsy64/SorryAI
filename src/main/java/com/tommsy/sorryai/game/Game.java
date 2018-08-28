@@ -22,17 +22,24 @@ import java.util.Arrays;
 
 import com.tommsy.sorryai.agent.Agent;
 import com.tommsy.sorryai.agent.AgentHandler;
-import com.tommsy.sorryai.game.Board.ExitDirection;
 import com.tommsy.sorryai.game.Player.GamePiece;
 import com.tommsy.sorryai.game.dice.DiceRoller;
 import com.tommsy.sorryai.game.dice.RandomDiceRoller;
 
+/**
+ * Manages the player-board and agent-player interactions of the game.
+ */
 public class Game {
     final Player player1, player2, player3, player4;
     private final DiceRoller dice;
 
     AgentHandler agentHandler;
 
+    /**
+     * Defaults to a {@link RandomDiceRoller}.
+     *
+     * @param agentHandler
+     */
     public Game(AgentHandler agentHandler) {
         this(new RandomDiceRoller(), agentHandler);
     }
@@ -51,6 +58,13 @@ public class Game {
         runGame(new Board());
     }
 
+    /**
+     * Plays the entire game, returning only when it is over.
+     *
+     * @param board The board to play the game on.
+     * @throws IllegalStateException if {@linkplain agentHandler} is null.
+     */
+    // TODO: Split the method up into more modular parts
     void runGame(Board board) {
         if (agentHandler == null)
             throw new IllegalStateException("Cannot run game without an agent handler.");
@@ -72,7 +86,9 @@ public class Game {
                 } else if (selectedPiece.progress == GamePiece.CENTER_PROGRESS) {
                     ExitDirection exitDirection;
                     do {
+                        // TODO: Pass array of possible exit directions to getExitDirection()
                         exitDirection = agent.getExitDirection();
+                        // TODO: Fix possible infinite loop here.
                     } while (!board.canExitCenterTo(selectedPiece, exitDirection));
 
                     if (board.exitCenter(selectedPiece, exitDirection))
@@ -90,7 +106,7 @@ public class Game {
                         processEating(agent, board, selectedPiece);
                 }
 
-                System.out.println(drawBoard(board));
+                System.out.println(boardToString(board));
                 System.out.println("=========================================================================");
                 System.out.print("End of turn\n\n\n\n\n\n\n\n\n\n");
 
@@ -110,27 +126,54 @@ public class Game {
         } while (!gameOver);
     }
 
-    public String drawBoard(Board board) {
+    /**
+     * This method is in {@linkplain Game} and not {@linkplain Board} because it requires access to the 4 {@linkplain Player} objects.
+     *
+     * @param board
+     * @return A human-readable representation of the board state.
+     */
+    public String boardToString(Board board) {
         return board.toString(player1, player2, player3, player4);
     }
 
-    private void processEating(Agent agent, Board board, GamePiece piece) {
+    /**
+     * <ol>
+     * <li>Checks with the agent if the piece should move 5 steps after having eaten another piece.</li>
+     * <li>Checks if the piece can or must access the center and asks the agent if the piece should move to the center.</li>
+     * <li>Repeats if another piece was eaten</li>
+     * </ol>
+     *
+     * @param agent The agent that did the eating
+     * @param board The board
+     * @param piece The piece that did the eating
+     */
+    void processEating(Agent agent, Board board, GamePiece piece) {
         if (!board.canMoveByAmount(piece, 5))
             return;
         boolean atePiece = true;
         while (atePiece && agent.moveAfterEating()) {
-            if (board.canMoveToCenter(piece, 5) && board.canMoveByAmount(piece, 4)) {
+            final boolean canMoveBy5 = board.canMoveByAmount(piece, 5); // Used by two expressions, so store it
+            if (board.canEnterCenter(piece, 5) && board.canMoveByAmount(piece, 4)) {
                 piece.canMoveToCenter = true;
-                if (piece.mustMoveToCenter = !board.canMoveByAmount(piece, 5) || agent.moveToCenter()) {
+                // If piece can move 4 but cannot move 5, something blocks the piece's path and it must move into the center
+                // Otherwise, it's the agent's choice whether the pieces moves to the center
+                if (piece.mustMoveToCenter = !canMoveBy5 || agent.moveToCenter()) {
                     board.moveToCenter(piece);
                     break;
                 }
             }
-            if (board.canMoveByAmount(piece, 5))
+            if (canMoveBy5)
                 atePiece = board.moveByAmount(piece, 5);
         }
     }
 
+    /**
+     * Rolls the die for each player and returns the player with the largest roll.
+     * <p>
+     * Ties between players are rerolled until the tie is resolved.
+     *
+     * @return The player that rolled the highest
+     */
     Player determineStartingPlayer() {
         int[] rolls = { dice.roll(), dice.roll(), dice.roll(), dice.roll() };
         int max;
@@ -140,6 +183,14 @@ public class Game {
         return getPlayerByIndex(Integer.numberOfTrailingZeros(max) + 1);
     }
 
+    /**
+     * Finds the indices of all the max value(s) in the array, representing them in a bitmap where the least significant bit corresponds to the first element in the list.
+     * <p>
+     * E.g., Input: [1, 5, 5, 4] Output: (2 | 4) = 8 (or 1010 in binary)
+     *
+     * @param rolls Length must be 4
+     * @return a bitmap
+     */
     static int getMaxes(int[] rolls) {
         int maxVal = rolls[0];
         int bitmap = 1;
@@ -163,6 +214,12 @@ public class Game {
         return bitmap;
     }
 
+    /**
+     * Convert 1, 2, 3, or 4 to the corresponding player.
+     *
+     * @param 1, 2, 3, or 4
+     * @throws IllegalArgumentException
+     */
     Player getPlayerByIndex(int i) {
         switch (i) {
         case 1:
@@ -178,6 +235,10 @@ public class Game {
         }
     }
 
+    /**
+     * @return the player that goes next
+     * @throws IllegalArgumentException if specified player is not part of this {@linkplain Game game}.
+     */
     Player getNextPlayer(Player currentPlayer) {
         if (currentPlayer == player1)
             return player2;

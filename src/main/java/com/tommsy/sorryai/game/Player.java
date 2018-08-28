@@ -20,23 +20,44 @@ package com.tommsy.sorryai.game;
 
 import lombok.Getter;
 
+/**
+ * Represents a controller of {@linkplain GamePiece GamePieces} in a {@linkplain Game}.
+ */
 public class Player {
+    // The program is not written to allow this to change
     static final int PIECES_PER_PLAYER = 5;
 
     final GamePiece[] pieces = new GamePiece[PIECES_PER_PLAYER];
-    public final int index, startingPosition;
+    /**
+     * 0, 1, 2, or 3
+     */
+    public final int index;
+    /**
+     * The position on the board that this player initially places its pieces
+     */
+    public final int startingPosition;
 
+    /**
+     * @param index Should be 0, 1, 2 or 3
+     */
     Player(int index) {
         this.index = index;
-        this.startingPosition = Board.SIZE / 4 * index;
+        this.startingPosition = Board.SIZE / 4 * index; // Starting positions evenly spread for the 4 players
         for (int i = 0; i < pieces.length; i++)
             pieces[i] = new GamePiece();
     }
 
     public class GamePiece implements Comparable<GamePiece> {
         static final int CENTER_PROGRESS = -2;
+
+        /**
+         * The number of positions has the piece been moved from its start position.
+         */
         @Getter
         int progress = -1;
+        /**
+         * The absolute position on the board.
+         */
         int boardIndex = -1;
 
         @Getter

@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.tommsy.sorryai.game.Board.ExitDirection;
 import com.tommsy.sorryai.game.Player.GamePiece;
 
 public class BoardTest {

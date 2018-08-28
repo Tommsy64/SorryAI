@@ -23,10 +23,13 @@ import java.util.Random;
 import lombok.Getter;
 
 import com.tommsy.sorryai.game.Board;
-import com.tommsy.sorryai.game.Board.ExitDirection;
+import com.tommsy.sorryai.game.ExitDirection;
 import com.tommsy.sorryai.game.Game;
 import com.tommsy.sorryai.game.Player.GamePiece;
 
+/**
+ * This agent makes all choices at random.
+ */
 public class RandomAgent implements Agent {
 
     private final Random rand;
@@ -57,6 +60,6 @@ public class RandomAgent implements Agent {
 
     @Override
     public ExitDirection getExitDirection() {
-        return ExitDirection.fromPlayerIndex(rand.nextInt(4) + 1);
+        return ExitDirection.fromPlayerIndex(rand.nextInt(4));
     }
 }

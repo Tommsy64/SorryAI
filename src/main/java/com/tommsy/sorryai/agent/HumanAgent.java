@@ -27,10 +27,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import com.tommsy.sorryai.game.Board;
-import com.tommsy.sorryai.game.Board.ExitDirection;
+import com.tommsy.sorryai.game.ExitDirection;
 import com.tommsy.sorryai.game.Game;
 import com.tommsy.sorryai.game.Player.GamePiece;
 
+/**
+ * This agent displays all choices to the console, allowing a human to make the decisions.
+ */
+// TODO: Move input handling to its own location
 @RequiredArgsConstructor
 @ToString
 public class HumanAgent implements Agent {
@@ -41,7 +45,7 @@ public class HumanAgent implements Agent {
     @Override
     public int processTurn(Game game, Board board, int dice, GamePiece[] moveablePieces) {
         Arrays.sort(moveablePieces);
-        System.out.println(game.drawBoard(board));
+        System.out.println(game.boardToString(board));
 
         if (moveablePieces.length == 1) {
             System.out.println(name + " rolled a " + dice + ".");
@@ -97,6 +101,6 @@ public class HumanAgent implements Agent {
         do {
             playerDirection = scanner.hasNextInt() ? scanner.nextInt() : -1;
         } while (playerDirection != 1 && playerDirection != 2 && playerDirection != 3 && playerDirection == 4);
-        return ExitDirection.fromPlayerIndex(playerDirection);
+        return ExitDirection.fromPlayerIndex(playerDirection - 1);
     }
 }

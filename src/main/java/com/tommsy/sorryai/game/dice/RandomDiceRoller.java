@@ -21,6 +21,9 @@ package com.tommsy.sorryai.game.dice;
 import java.security.SecureRandom;
 import java.util.Random;
 
+/**
+ * Rolls calculated by {@link Random}
+ */
 public class RandomDiceRoller implements DiceRoller {
 
     private final Random rand;

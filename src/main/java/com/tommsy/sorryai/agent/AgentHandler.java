@@ -18,9 +18,19 @@
 
 package com.tommsy.sorryai.agent;
 
+import com.tommsy.sorryai.game.Game;
+import com.tommsy.sorryai.game.Player;
+
+/**
+ * Used by a {@link Game} to match {@link Player Players} to {@link Agent Agents}.
+ */
 public class AgentHandler {
     private final Agent[] agents;
 
+    /**
+     * @param agents Array of 4 agents
+     * @throws IllegalArgumentException if length of array is not 4
+     */
     public AgentHandler(Agent... agents) {
         if (agents == null || agents.length != 4)
             throw new IllegalArgumentException("There must be exactly 4 agents.");
